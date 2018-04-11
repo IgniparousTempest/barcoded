@@ -60,3 +60,13 @@ target/
 
 #Ipython Notebook
 .ipynb_checkpoints
+
+# Virtual Environment
+venv/
+
+# SQLite3 Databases
+*.sqlite3
+*.sqlite3-journal
+
+# PyCharm Stuff
+.idea/

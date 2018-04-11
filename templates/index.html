@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Shopping List</title>
+    <link rel="stylesheet" href="/static/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/stylesheet.css">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon-32x32.png') }}">
+</head>
+<body>
+
+{% macro createRow(barcode, name, quantity) -%}
+    <tr id="{{ barcode }}_row">
+      <th scope="row">{{ name }}</th>
+      <td id="{{ barcode }}_quantity">{{ quantity }}</td>
+      <td>
+        <button type="button" class="btn btn-success" onclick="changeItemQuantity({{ barcode }}, 1)">
+          <i class="fas fa-plus"></i>
+        </button>
+        <button type="button" class="btn btn-warning" onclick="changeItemQuantity({{ barcode }}, -1)">
+          <i class="fas fa-minus"></i>
+        </button>
+        <button type="button" class="btn btn-danger" onclick="deleteItem({{ barcode }})">
+          <i class="fas fa-trash"></i>
+        </button>
+      </td>
+    </tr>
+{%- endmacro %}
+
+<script>
+    function addNewBarcode() {
+        const barcode = $('#addBarcode').val();
+        $.post(
+            "/api/item/" + barcode,
+            {quantity_change: 1},
+            function(data) {
+                let quantityElement = $("#"+barcode+"_quantity");
+                if (quantityElement.length === 0)
+                    $('#shoppingListTable tr:last').after(`{{ createRow("`+barcode+`", "`+data.name+`", "`+data.quantity+`") }}`);
+                else
+                    quantityElement.text(data["quantity"]);
+        });
+    }
+
+    function changeItemQuantity(barcode, delta_quantity) {
+        $.post(
+            "/api/item/" + barcode,
+            {quantity_change: delta_quantity},
+            function(data) {
+                if (data["quantity"] === 0)
+                    $('#' + barcode + '_row').remove();
+                else
+                    $("#"+barcode+"_quantity").text(data["quantity"]);
+        });
+    }
+    function deleteItem(barcode) {
+        $.ajax({
+            url: "/api/item/" + barcode,
+            type: 'DELETE',
+            success: function(result) {
+                $('#' + barcode + '_row').remove();
+            }
+        });
+    }
+
+    $('#addBarcode').on("enterKey",function(e){
+        addNewBarcode();
+    });
+    $('#addBarcode').keyup(function(e){
+        if(e.keyCode === 13)
+        {
+            $(this).trigger("enterKey");
+        }
+    });
+</script>
+
+<nav class="navbar navbar-expand-sm bg-dark navbar-dark">
+    <div class="container">
+        <a class="navbar-brand navbar-light" href="/">Shopping List</a>
+        <form class="form-inline" onsubmit="return false">
+            <input id="addBarcode" class="form-control mr-sm-2" type="text" placeholder="Add product by barcode" aria-label="Add product by barcode">
+            <button class="btn btn-outline-success my-2 my-sm-0" onclick="addNewBarcode()">Add</button>
+        </form>
+    </div>
+</nav>
+
+<div class="col-xs-12" style="height:10px;"></div>
+
+<div class="container">
+    <table id="shoppingListTable" class="table table-hover">
+      <thead class="thead-dark">
+        <tr>
+          <th scope="col">Name</th>
+          <th scope="col">Quantity</th>
+          <th scope="col"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in items %}
+          {{ createRow(item.barcode, item.name, item.quantity) }}
+        {% endfor %}
+      </tbody>
+    </table>
+</div>
+
+<footer class="footer">
+  <div class="container">
+      <span class="text-muted">An open source project created by <a href="https://github.com/IgniparousTempest/barcoded">Courtney Pitcher</a>.</span>
+  </div>
+</footer>
+
+<script src="/static/js/jquery-3.3.1.min.js"></script>
+<script src="/static/js/popper.min.js"></script>
+<script src="/static/js/bootstrap.min.js"></script>
+<script defer src="https://use.fontawesome.com/releases/v5.0.9/js/all.js" integrity="sha384-8iPTk2s/jMVj81dnzb/iFR2sdA7u06vHJyyLlAd4snFpCl/SnyUjRrbdJsw1pGIl" crossorigin="anonymous"></script>
+</body>
+</html>
