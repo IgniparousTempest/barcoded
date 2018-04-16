@@ -23,7 +23,7 @@ class ShoppingList(object):
             try:
                 name = self._lookup.name(barcode)
             except ValueError:
-                name = "Unknown Product Name"
+                name = f"Unknown Product ({barcode})"
             self._items[barcode] = ShoppingItem(barcode, name, 0)
         self._items[barcode].quantity += quantity
 

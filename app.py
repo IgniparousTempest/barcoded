@@ -9,7 +9,6 @@ app = Flask(__name__)
 
 barcode_lookup = BarcodeLookupSQLite("upc_database.json")
 shopping_list = ShoppingList(barcode_lookup)
-shopping_list.add("4890008100309")
 
 
 def barcode_validate(barcode: str) -> bool:
