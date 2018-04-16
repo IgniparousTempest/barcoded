@@ -14,16 +14,29 @@ class ShoppingItem(object):
 
 
 class ShoppingList(object):
-    def __init__(self, lookup: BarcodeLookup):
+    def __init__(self, lookup: BarcodeLookup, cache: BarcodeLookup = None):
+        """
+        The shopping list object, it translates barcodes into items on the list.
+        :param lookup: The barcode translation service.
+        :param cache: An optional local cache that is searched before the lookup.
+        """
         self._lookup = lookup
+        self._cache = cache
         self._items: Dict[str, ShoppingItem] = {}
 
     def add(self, barcode: str, quantity: int = 1):
         if barcode not in self._items:
+            # Try local cache first
             try:
-                name = self._lookup.name(barcode)
+                if self._cache is None:
+                    raise ValueError()
+                name = self._cache.name(barcode)
             except ValueError:
-                name = f"Unknown Product ({barcode})"
+                # Try external source afterwards
+                try:
+                    name = self._lookup.name(barcode)
+                except ValueError:
+                    name = f"Unknown Product ({barcode})"
             self._items[barcode] = ShoppingItem(barcode, name, 0)
         self._items[barcode].quantity += quantity
 

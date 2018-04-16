@@ -1,3 +1,4 @@
+import argparse
 from typing import List
 
 from flask import Flask, jsonify, request, render_template, Response
@@ -7,8 +8,7 @@ from shopping_list import ShoppingList, ShoppingItem
 
 app = Flask(__name__)
 
-barcode_lookup = BarcodeLookupSQLite("upc_database.json")
-shopping_list = ShoppingList(barcode_lookup)
+shopping_list = None
 
 
 def barcode_validate(barcode: str) -> bool:
@@ -141,5 +141,24 @@ def api_shopping_item(barcode):
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+                                     description='Runs a barcoded server, to manage a shopping list by scanning '
+                                                 'barcodes.')
+    parser.add_argument('ip_address', metavar='IP', type=str, nargs='?', default='127.0.0.1',
+                        help='The IP address to host the server.')
+    parser.add_argument('port', metavar='PORT', type=int, nargs='?', default=41040,
+                        help='The port of the server.')
+    parser.add_argument('api_key', metavar='API_KEY', type=str, nargs='?', default=None,
+                        help='The upcdatabase.org api key. If a key is provided the local databse will be used as a L1 '
+                             'cache, if none is provided, then the local databse will be used as the primary lookup.')
+
+    args = parser.parse_args()
+    barcode_cache = BarcodeLookupSQLite("upc_database.json")
+    if args.api_key is None:
+        shopping_list = ShoppingList(barcode_cache)
+    else:
+        barcode_lookup = BarcodeLookupUPCDatabaseOrg(args.api_key)
+        shopping_list = ShoppingList(barcode_lookup, barcode_cache)
+
     # Default port is 41040: Numeric values of LIST multiplied together, very cute indeed.
-    app.run(host='0.0.0.0', port=41040)
+    app.run(host=args.ip_address, port=args.port)
