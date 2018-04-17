@@ -1,4 +1,5 @@
 import argparse
+from pathlib import Path
 from typing import List
 
 from flask import Flask, jsonify, request, render_template, Response
@@ -152,14 +153,19 @@ if __name__ == '__main__':
     parser.add_argument('api_key', metavar='API_KEY', type=str, nargs='?', default=None,
                         help='The upcdatabase.org api key. If a key is provided the local databse will be used as a L1 '
                              'cache, if none is provided, then the local databse will be used as the primary lookup.')
+    parser.add_argument('--reset', action='store_true', help='Reset the persisted shopping list data store.')
 
     args = parser.parse_args()
+    persistence_db = 'shopping_list_persistence.sqlite3'
+    if args.reset:
+        Path(persistence_db).unlink()
+
     barcode_cache = BarcodeLookupSQLite("upc_database.json")
     if args.api_key is None:
-        shopping_list = ShoppingList(barcode_cache)
+        shopping_list = ShoppingList(barcode_cache, persistence_db)
     else:
         barcode_lookup = BarcodeLookupUPCDatabaseOrg(args.api_key)
-        shopping_list = ShoppingList(barcode_lookup, barcode_cache)
+        shopping_list = ShoppingList(barcode_lookup, persistence_db, barcode_cache)
 
     # Default port is 41040: Numeric values of LIST multiplied together, very cute indeed.
     app.run(host=args.ip_address, port=args.port)

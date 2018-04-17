@@ -59,19 +59,19 @@ class BarcodeLookupSQLite(BarcodeLookup):
         self.database_name = database_name
         self.conn = sqlite3.connect(database_name)
         with self.conn as curr:
-            curr.execute('create table if not exists ShoppingList(barcode text NOT NULL PRIMARY KEY, name text NOT NULL);')
+            curr.execute('create table if not exists Barcodes(barcode text NOT NULL PRIMARY KEY, name text NOT NULL);')
 
         if not db_exists:
             curr = self.conn.cursor()
             with open(json_name, 'r', encoding='utf-8') as f:
                 for item in json.load(f):
-                    curr.execute('INSERT INTO ShoppingList VALUES (?, ?);', (item['barcode'], item['name']))
+                    curr.execute('INSERT INTO Barcodes VALUES (?, ?);', (item['barcode'], item['name']))
             self.conn.commit()
             curr.close()
 
     def name(self, barcode: str) -> str:
         curr = self.conn.cursor()
-        curr.execute('SELECT * FROM ShoppingList WHERE barcode=?', (barcode,))
+        curr.execute('SELECT * FROM Barcodes WHERE barcode=?', (barcode,))
         row = curr.fetchone()
         if row is None:
             raise ValueError("Barcode not found")
