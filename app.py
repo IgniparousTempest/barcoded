@@ -31,9 +31,10 @@ def dict_shopping_list(list_data: ShoppingList) -> List[dict]:
     return dict_list
 
 
-def json_base(data: dict, status: int = 200, message: str = '') -> Response:
+def json_base(data: dict, status: int = 200, message: str = None) -> Response:
     data['status'] = status
-    data['message'] = message
+    if message is not None:
+        data['message'] = message
     return jsonify(data)
 
 
